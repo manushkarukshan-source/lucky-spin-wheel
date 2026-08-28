@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Large Spin Wheel with Settings Popup</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e2f;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .container {
+            text-align: center;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .settings-icon-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #2f3542;
+            color: white;
+            border: 2px solid #747d8c;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            opacity: 0.1;
+            transition: opacity 0.2s, background 0.2s;
+            z-index: 20;
+        }
+
+        .settings-icon-btn:hover {
+            opacity: 1.0;
+            background-color: #747d8c;
+        }
+
+        .pointer {
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 35px solid #ff4757;
+            position: absolute;
+            top: calc(50% - 435px - 35px);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3));
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 870px;
+            height: 870px;
+            margin-bottom: 25px;
+            margin-top: 35px;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 8px solid #333333;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 15s cubic-bezier(0.15, 0.9, 0.1, 1);
+        }
+
+        .sector {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .sector img {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            object-fit: contain;
+        }
+
+        .sector span {
+            position: absolute;
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .spin-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background-color: #ffffff;
+            color: #2f3542;
+            border: 5px solid #333333;
+            font-weight: bold;
+            font-size: 22px;
+            cursor: pointer;
+            z-index: 5;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: visible;
+            text-align: center;
+            padding: 5px;
+        }
+
+        .spin-btn img {
+            width: 250px;
+            height: 250px;
+            object-fit: contain;
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 6;
+            pointer-events: none;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
+        }
+
+        .spin-btn img.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .spin-btn:hover {
+            background-color: #f1f2f6;
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+
+        .spin-btn:disabled {
+            background-color: #a4b0be;
+            cursor: not-allowed;
+            transform: translate(-50%, -50%);
+        }
+
+        #result {
+            font-size: 26px;
+            font-weight: bold;
+            color: #f1c40f;
+            margin-top: 15px;
+            min-height: 40px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .settings-panel {
+            background-color: #2f3542;
+            padding: 25px;
+            border-radius: 12px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            max-width: 550px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .settings-panel div {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .settings-panel label {
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #a4b0be;
+        }
+
+        .settings-panel input[type="number"] {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #747d8c;
+            background-color: #1e1e2f;
+            color: white;
+            font-size: 14px;
+            width: 130px;
+            text-align: center;
+        }
+
+        .settings-panel input[type="text"] {
+            padding: 6px;
+            border-radius: 5px;
+            border: 1px solid #747d8c;
+            background-color: #1e1e2f;
+            color: white;
+            font-size: 12px;
+            width: 110px;
+        }
+
+        .settings-panel input[type="file"] {
+            color: white;
+            font-size: 11px;
+            width: 120px;
+        }
+
+        .settings-panel input[type="color"] {
+            border: none;
+            width: 30px;
+            height: 25px;
+            background: none;
+            cursor: pointer;
+        }
+
+        .settings-panel button.update-btn {
+            padding: 9px 15px;
+            background-color: #2ed573;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 18px;
+            width: 100%;
+        }
+
+        .settings-panel button.update-btn:hover {
+            background-color: #26af5f;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #a4b0be;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0 !important;
+        }
+
+        .close-btn:hover {
+            color: white;
+        }
+
+        #inputsContainer {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <button class="settings-icon-btn" onclick="toggleSettings(true)" title="Settings">⚙</button>
+
+        <div class="pointer"></div>
+        <div class="wheel-container">
+            <div class="wheel" id="wheel">
+                <div class="sector" id="sectorContainer">
+                    <!-- Dynamic Sectors -->
+                </div>
+            </div>
+            <button class="spin-btn" id="spinBtn" onclick="spinWheel()">
+                <span id="spinBtnText">SPIN</span>
+                <img id="spinBtnImg" src="" alt="Result">
+            </button>
+        </div>
+        <div id="result">Spin the wheel!</div>
+    </div>
+
+    <div class="modal-overlay" id="settingsModal">
+        <div class="settings-panel">
+            <button class="close-btn" onclick="toggleSettings(false)">✕</button>
+            <div>
+                <label>Time (Sec):</label>
+                <input type="number" id="spinTimeInput" value="15" min="1" max="60">
+            </div>
+            <div>
+                <label>Sectors Count:</label>
+                <input type="number" id="totalSectorsInput" value="6" min="2" max="12" onchange="generateInputFields()">
+            </div>
+            <div style="width: 100%;">
+                <label>Sector Customization (Text, Image, Color):</label>
+                <div id="inputsContainer"></div>
+            </div>
+            <div style="width: 100%;">
+                <button class="update-btn" onclick="updateSettings()">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const wheel = document.getElementById('wheel');
+        const spinBtn = document.getElementById('spinBtn');
+        const spinBtnText = document.getElementById('spinBtnText');
+        const spinBtnImg = document.getElementById('spinBtnImg');
+        const resultDiv = document.getElementById('result');
+        const settingsModal = document.getElementById('settingsModal');
+        const sectorContainer = document.getElementById('sectorContainer');
+        const inputsContainer = document.getElementById('inputsContainer');
+
+        let currentRotation = 0;
+        let totalSectors = 6;
+        let degreesPerSector = 360 / totalSectors;
+        let spinDuration = 15;
+        
+        let sectorTexts = ["One", "Two", "Three", "Four", "Five", "Six", "", "", "", "", "", ""];
+        let sectorImages = new Array(12).fill('');
+        let sectorColors = [
+            '#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6',
+            '#1abc9c', '#e84393', '#00cec9', '#fdcb6e', '#6c5ce7', '#d63031'
+        ];
+
+        function generateInputFields() {
+            const count = parseInt(document.getElementById('totalSectorsInput').value);
+            inputsContainer.innerHTML = '';
+            for (let i = 1; i <= count; i++) {
+                const div = document.createElement('div');
+                div.style.flexDirection = 'column';
+                div.style.alignItems = 'center';
+                div.style.gap = '4px';
+                div.style.background = '#1e1e2f';
+                div.style.padding = '8px';
+                div.style.borderRadius = '6px';
+                div.innerHTML = `
+                    <div style="display:flex; flex-direction:row; align-items:center; gap:5px;">
+                        <label style="font-size:12px; margin:0;">${i}</label>
+                        <input type="color" id="color${i}" value="${sectorColors[i-1]}" title="Sector Color">
+                    </div>
+                    <input type="text" id="text${i}" value="${sectorTexts[i-1]}" placeholder="Text">
+                    <input type="file" id="file${i}" accept="image/*" onchange="handleImageUpload(event, ${i-1})">
+                `;
+                inputsContainer.appendChild(div);
+            }
+        }
+
+        function handleImageUpload(event, index) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    sectorImages[index] = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function buildWheel() {
+            let gradientStr = 'conic-gradient(';
+            let sectorsHTML = '';
+            
+            degreesPerSector = 360 / totalSectors;
+
+            for (let i = 0; i < totalSectors; i++) {
+                const startAngle = i * degreesPerSector;
+                const endAngle = (i + 1) * degreesPerSector;
+                const color = sectorColors[i] || '#ccc';
+                
+                gradientStr += `${color} ${startAngle}deg ${endAngle - 1.5}deg, #333333 ${endAngle - 1.5}deg ${endAngle}deg${i === totalSectors - 1 ? '' : ','}`;
+
+                const angleRad = ((startAngle + endAngle) / 2) * (Math.PI / 180);
+                const radius = 290; 
+                const centerX = 435;
+                const centerY = 435;
+                const x = centerX + radius * Math.sin(angleRad) - 125;
+                const y = centerY - radius * Math.cos(angleRad) - 125;
+                const textRotation = (startAngle + endAngle) / 2;
+
+                const imgUrl = sectorImages[i];
+                const txt = sectorTexts[i];
+
+                if (imgUrl) {
+                    sectorsHTML += `<img id="label${i+1}" src="${imgUrl}" style="top: ${y}px; left: ${x}px; width: 250px; height: 250px; object-fit: contain; transform: rotate(${textRotation}deg);" alt="Sector">`;
+                } else if (txt) {
+                    const txtX = centerX + (radius - 10) * Math.sin(angleRad);
+                    const txtY = centerY - (radius - 10) * Math.cos(angleRad);
+                    sectorsHTML += `<span id="label${i+1}" style="top: ${txtY}px; left: ${txtX}px; transform: translate(-50%, -50%) rotate(${textRotation}deg);">${txt}</span>`;
+                }
+            }
+            gradientStr += ')';
+
+            wheel.style.background = gradientStr;
+            sectorContainer.innerHTML = sectorsHTML;
+        }
+
+        function toggleSettings(show) {
+            settingsModal.style.display = show ? 'flex' : 'none';
+        }
+
+        function updateSettings() {
+            const timeVal = parseInt(document.getElementById('spinTimeInput').value);
+            if(timeVal > 0) {
+                spinDuration = timeVal;
+                wheel.style.transition = `transform ${spinDuration}s cubic-bezier(0.15, 0.9, 0.1, 1)`;
+            }
+
+            const countVal = parseInt(document.getElementById('totalSectorsInput').value);
+            if(countVal >= 2 && countVal <= 12) {
+                totalSectors = countVal;
+            }
+
+            sectorTexts = [];
+            sectorColors = [];
+            for(let i = 1; i <= totalSectors; i++) {
+                sectorTexts.push(document.getElementById(`text${i}`).value);
+                sectorColors.push(document.getElementById(`color${i}`).value);
+            }
+
+            buildWheel();
+            resultDiv.textContent = "Settings updated!";
+            toggleSettings(false);
+        }
+
+        function spinWheel() {
+            if (spinBtn.disabled) return;
+            spinBtn.disabled = true;
+            spinBtnText.textContent = "SPIN";
+            spinBtnText.style.display = 'block';
+            spinBtnImg.classList.remove('show');
+            spinBtnImg.style.display = 'none';
+            resultDiv.textContent = "Spinning...";
+
+            const minSpins = Math.max(3, Math.floor(spinDuration / 1.5));
+            const maxSpins = Math.max(5, Math.floor(spinDuration * 1.2));
+            const randomSpins = Math.floor(Math.random() * (maxSpins - minSpins + 1)) + minSpins;
+            const randomDegree = Math.floor(Math.random() * 360);
+            const totalDegrees = currentRotation + (randomSpins * 360) + randomDegree;
+
+            currentRotation = totalDegrees;
+            wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+            setTimeout(() => {
+                spinBtn.disabled = false;
+
+                const normalizedDegree = (360 - (currentRotation % 360)) % 360;
+                const winningIndex = Math.floor(normalizedDegree / degreesPerSector) % totalSectors;
+
+                spinBtnText.style.display = 'block';
+
+                const winText = sectorTexts[winningIndex] || (winningIndex + 1);
+                const winImg = sectorImages[winningIndex];
+
+                if (winImg) {
+                    spinBtnText.style.display = 'none';
+                    spinBtnImg.src = winImg;
+                    spinBtnImg.style.display = 'block';
+                    setTimeout(() => {
+                        spinBtnImg.classList.add('show');
+                    }, 50);
+                }
+
+                resultDiv.textContent = `${winText}`;
+            }, spinDuration * 1000);
+        }
+
+        window.addEventListener('keydown', function(event) {
+            if (event.code === 'Space' && settingsModal.style.display !== 'flex') {
+                event.preventDefault();
+                spinWheel();
+            }
+        });
+
+        generateInputFields();
+        buildWheel();
+    </script>
+
+</body>
+</html>
