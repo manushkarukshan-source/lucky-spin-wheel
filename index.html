@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Large Spin Wheel with Settings Popup</title>
     <style>
         :root {
@@ -110,8 +110,7 @@
             margin-bottom: 25px;
             margin-top: 45px;
             transition: width 0.3s, height 0.3s;
-            max-width: 90vw;
-            max-height: 90vw;
+            flex-shrink: 0;
         }
 
         .wheel {
