@@ -65,7 +65,7 @@
             border-right: 20px solid transparent;
             border-top: 35px solid #ff4757;
             position: absolute;
-            top: calc(50% - 435px - 35px);
+            top: calc(50% - var(--wheel-radius, 435px) - 35px);
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
@@ -74,10 +74,11 @@
 
         .wheel-container {
             position: relative;
-            width: 870px;
-            height: 870px;
+            width: var(--wheel-size, 870px);
+            height: var(--wheel-size, 870px);
             margin-bottom: 25px;
             margin-top: 35px;
+            transition: width 0.3s, height 0.3s;
         }
 
         .wheel {
@@ -298,15 +299,14 @@
 </head>
 <body>
 
-    <div class="container">
+    <div class="container" id="mainContainer">
         <button class="settings-icon-btn" onclick="toggleSettings(true)" title="Settings">⚙</button>
 
-        <div class="pointer"></div>
-        <div class="wheel-container">
+        <div class="pointer" id="pointerElement"></div>
+        <div class="wheel-container" id="wheelContainer">
             <div class="wheel" id="wheel">
                 <div class="sector" id="sectorContainer">
-                    <!-- Dynamic Sectors -->
-                </div>
+                    </div>
             </div>
             <button class="spin-btn" id="spinBtn" onclick="spinWheel()">
                 <span id="spinBtnText">SPIN</span>
@@ -327,6 +327,10 @@
                 <label>Sectors Count:</label>
                 <input type="number" id="totalSectorsInput" value="6" min="2" max="12" onchange="generateInputFields()">
             </div>
+            <div>
+                <label>Wheel Size (px):</label>
+                <input type="number" id="wheelSizeInput" value="870" min="200" max="1500">
+            </div>
             <div style="width: 100%;">
                 <label>Sector Customization (Text, Image, Color):</label>
                 <div id="inputsContainer"></div>
@@ -339,6 +343,8 @@
 
     <script>
         const wheel = document.getElementById('wheel');
+        const wheelContainer = document.getElementById('wheelContainer');
+        const pointerElement = document.getElementById('pointerElement');
         const spinBtn = document.getElementById('spinBtn');
         const spinBtnText = document.getElementById('spinBtnText');
         const spinBtnImg = document.getElementById('spinBtnImg');
@@ -351,6 +357,7 @@
         let totalSectors = 6;
         let degreesPerSector = 360 / totalSectors;
         let spinDuration = 15;
+        let wheelSize = 870;
         
         let sectorTexts = ["One", "Two", "Three", "Four", "Five", "Six", "", "", "", "", "", ""];
         let sectorImages = new Array(12).fill('');
@@ -394,6 +401,10 @@
         }
 
         function buildWheel() {
+            wheelContainer.style.setProperty('--wheel-size', wheelSize + 'px');
+            const radiusVal = wheelSize / 2;
+            pointerElement.style.top = `calc(50% - ${radiusVal}px - 35px)`;
+
             let gradientStr = 'conic-gradient(';
             let sectorsHTML = '';
             
@@ -407,18 +418,19 @@
                 gradientStr += `${color} ${startAngle}deg ${endAngle - 1.5}deg, #333333 ${endAngle - 1.5}deg ${endAngle}deg${i === totalSectors - 1 ? '' : ','}`;
 
                 const angleRad = ((startAngle + endAngle) / 2) * (Math.PI / 180);
-                const radius = 290; 
-                const centerX = 435;
-                const centerY = 435;
-                const x = centerX + radius * Math.sin(angleRad) - 125;
-                const y = centerY - radius * Math.cos(angleRad) - 125;
+                const radius = wheelSize * 0.333; 
+                const centerX = wheelSize / 2;
+                const centerY = wheelSize / 2;
+                const imgSize = wheelSize * 0.287;
+                const x = centerX + radius * Math.sin(angleRad) - (imgSize / 2);
+                const y = centerY - radius * Math.cos(angleRad) - (imgSize / 2);
                 const textRotation = (startAngle + endAngle) / 2;
 
                 const imgUrl = sectorImages[i];
                 const txt = sectorTexts[i];
 
                 if (imgUrl) {
-                    sectorsHTML += `<img id="label${i+1}" src="${imgUrl}" style="top: ${y}px; left: ${x}px; width: 250px; height: 250px; object-fit: contain; transform: rotate(${textRotation}deg);" alt="Sector">`;
+                    sectorsHTML += `<img id="label${i+1}" src="${imgUrl}" style="top: ${y}px; left: ${x}px; width: ${imgSize}px; height: ${imgSize}px; object-fit: contain; transform: rotate(${textRotation}deg);" alt="Sector">`;
                 } else if (txt) {
                     const txtX = centerX + (radius - 10) * Math.sin(angleRad);
                     const txtY = centerY - (radius - 10) * Math.cos(angleRad);
@@ -445,6 +457,11 @@
             const countVal = parseInt(document.getElementById('totalSectorsInput').value);
             if(countVal >= 2 && countVal <= 12) {
                 totalSectors = countVal;
+            }
+
+            const sizeVal = parseInt(document.getElementById('wheelSizeInput').value);
+            if(sizeVal >= 200 && sizeVal <= 1500) {
+                wheelSize = sizeVal;
             }
 
             sectorTexts = [];
