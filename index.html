@@ -6,10 +6,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Large Spin Wheel with Settings Popup</title>
     <style>
+        :root {
+            --bg-color: #1e1e2f;
+            --text-color: #ffffff;
+            --panel-bg: #2f3542;
+            --panel-border: #747d8c;
+            --input-bg: #1e1e2f;
+            --input-border: #747d8c;
+            --input-text: #ffffff;
+            --btn-bg: #2f3542;
+            --btn-hover: #747d8c;
+        }
+
+        .light-mode {
+            --bg-color: #f5f6fa;
+            --text-color: #2f3542;
+            --panel-bg: #ffffff;
+            --panel-border: #dcdde1;
+            --input-bg: #f1f2f6;
+            --input-border: #ced6e0;
+            --input-text: #2f3542;
+            --btn-bg: #dfe4ea;
+            --btn-hover: #ced6e0;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1e1e2f;
-            color: #ffffff;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -20,6 +44,7 @@
             padding: 0;
             overflow: hidden;
             box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .container {
@@ -33,30 +58,35 @@
             justify-content: center;
         }
 
-        .settings-icon-btn {
+        .top-controls {
             position: absolute;
             top: 20px;
             right: 20px;
-            background-color: #2f3542;
-            color: white;
-            border: 2px solid #747d8c;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+        }
+
+        .top-btn {
+            background-color: var(--btn-bg);
+            color: var(--text-color);
+            border: 2px solid var(--panel-border);
             border-radius: 50%;
             width: 40px;
             height: 40px;
-            font-size: 18px;
+            font-size: 16px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             opacity: 0.1;
-            transition: opacity 0.2s, background 0.2s;
-            z-index: 20;
+            transition: opacity 0.2s, background 0.2s, color 0.2s, border 0.2s;
         }
 
-        .settings-icon-btn:hover {
+        .top-btn:hover {
             opacity: 1.0;
-            background-color: #747d8c;
+            background-color: var(--btn-hover);
         }
 
         .pointer {
@@ -66,7 +96,7 @@
             border-right: 20px solid transparent;
             border-top: 35px solid #ff4757;
             position: absolute;
-            top: calc(50% - var(--wheel-radius, 435px) - 35px);
+            top: calc(50% - (var(--wheel-size, 870px) / 2) - 35px);
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
@@ -195,7 +225,8 @@
         }
 
         .settings-panel {
-            background-color: #2f3542;
+            background-color: var(--panel-bg);
+            color: var(--text-color);
             padding: 25px;
             border-radius: 12px;
             display: flex;
@@ -208,6 +239,8 @@
             max-height: 85vh;
             overflow-y: auto;
             position: relative;
+            border: 1px solid var(--panel-border);
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .settings-panel div {
@@ -219,15 +252,15 @@
         .settings-panel label {
             font-size: 14px;
             margin-bottom: 5px;
-            color: #a4b0be;
+            color: var(--panel-border);
         }
 
         .settings-panel input[type="number"] {
             padding: 8px;
             border-radius: 5px;
-            border: 1px solid #747d8c;
-            background-color: #1e1e2f;
-            color: white;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            color: var(--input-text);
             font-size: 14px;
             width: 130px;
             text-align: center;
@@ -236,15 +269,15 @@
         .settings-panel input[type="text"] {
             padding: 5px;
             border-radius: 4px;
-            border: 1px solid #747d8c;
-            background-color: #1e1e2f;
-            color: white;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            color: var(--input-text);
             font-size: 11px;
             width: 90px;
         }
 
         .settings-panel input[type="file"] {
-            color: white;
+            color: var(--text-color);
             font-size: 10px;
             width: 100px;
         }
@@ -279,14 +312,14 @@
             right: 15px;
             background: none;
             border: none;
-            color: #a4b0be;
+            color: var(--text-color);
             font-size: 20px;
             cursor: pointer;
             padding: 0 !important;
         }
 
         .close-btn:hover {
-            color: white;
+            opacity: 0.7;
         }
 
         #inputsContainer {
@@ -300,7 +333,11 @@
 <body>
 
     <div class="container" id="mainContainer">
-        <button class="settings-icon-btn" onclick="toggleSettings(true)" title="Settings">⚙</button>
+        <div class="top-controls">
+            <button class="top-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+            <button class="top-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="Toggle Fullscreen">⛶</button>
+            <button class="top-btn" onclick="toggleSettings(true)" title="Settings">⚙</button>
+        </div>
 
         <div class="pointer" id="pointerElement"></div>
         <div class="wheel-container" id="wheelContainer">
@@ -352,6 +389,8 @@
         const settingsModal = document.getElementById('settingsModal');
         const sectorContainer = document.getElementById('sectorContainer');
         const inputsContainer = document.getElementById('inputsContainer');
+        const themeBtn = document.getElementById('themeBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
 
         let currentRotation = 0;
         let totalSectors = 6;
@@ -366,6 +405,37 @@
             '#1abc9c', '#e84393', '#00cec9', '#fdcb6e', '#6c5ce7', '#d63031'
         ];
 
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            if (document.body.classList.contains('light-mode')) {
+                themeBtn.textContent = '☀️';
+            } else {
+                themeBtn.textContent = '🌙';
+            }
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    alert(`Error attempting to enable fullscreen: ${err.message} (${err.name})`);
+                });
+                fullscreenBtn.textContent = '🗗';
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+                fullscreenBtn.textContent = '⛶';
+            }
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                fullscreenBtn.textContent = '⛶';
+            } else {
+                fullscreenBtn.textContent = '🗗';
+            }
+        });
+
         function generateInputFields() {
             const count = parseInt(document.getElementById('totalSectorsInput').value);
             inputsContainer.innerHTML = '';
@@ -374,13 +444,13 @@
                 div.style.flexDirection = 'column';
                 div.style.alignItems = 'center';
                 div.style.gap = '4px';
-                div.style.background = '#1e1e2f';
+                div.style.background = 'var(--input-bg)';
                 div.style.padding = '8px';
                 div.style.borderRadius = '6px';
                 div.style.boxSizing = 'border-box';
                 div.innerHTML = `
                     <div style="display:flex; flex-direction:row; align-items:center; gap:5px;">
-                        <label style="font-size:12px; margin:0;">${i}</label>
+                        <label style="font-size:12px; margin:0; color:var(--text-color);">${i}</label>
                         <input type="color" id="color${i}" value="${sectorColors[i-1]}" title="Sector Color">
                     </div>
                     <input type="text" id="text${i}" value="${sectorTexts[i-1]}" placeholder="Text">
@@ -403,8 +473,6 @@
 
         function buildWheel() {
             wheelContainer.style.setProperty('--wheel-size', wheelSize + 'px');
-            const radiusVal = wheelSize / 2;
-            pointerElement.style.top = `calc(50% - ${radiusVal}px - 35px)`;
 
             let gradientStr = 'conic-gradient(';
             let sectorsHTML = '';
