@@ -343,7 +343,8 @@
         <div class="wheel-container" id="wheelContainer">
             <div class="wheel" id="wheel">
                 <div class="sector" id="sectorContainer">
-                    </div>
+                    <!-- Dynamic Sectors -->
+                </div>
             </div>
             <button class="spin-btn" id="spinBtn" onclick="spinWheel()">
                 <span id="spinBtnText">SPIN</span>
@@ -392,7 +393,7 @@
         const themeBtn = document.getElementById('themeBtn');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
 
-        let currentRotation = 0;
+        let currentRotation = 270;
         let totalSectors = 6;
         let degreesPerSector = 360 / totalSectors;
         let spinDuration = 15;
@@ -509,6 +510,7 @@
             gradientStr += ')';
 
             wheel.style.background = gradientStr;
+            wheel.style.transform = `rotate(${currentRotation}deg)`;
             sectorContainer.innerHTML = sectorsHTML;
         }
 
