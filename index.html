@@ -96,7 +96,7 @@
             border-right: 20px solid transparent;
             border-top: 35px solid #ff4757;
             position: absolute;
-            top: calc(50% - (var(--wheel-size, 870px) / 2) - 35px);
+            top: calc(50% - (var(--wheel-size, 870px) / 2) - 10px);
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
@@ -108,8 +108,10 @@
             width: var(--wheel-size, 870px);
             height: var(--wheel-size, 870px);
             margin-bottom: 25px;
-            margin-top: 35px;
+            margin-top: 45px;
             transition: width 0.3s, height 0.3s;
+            max-width: 90vw;
+            max-height: 90vw;
         }
 
         .wheel {
@@ -209,6 +211,7 @@
             margin-top: 15px;
             min-height: 40px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            display: none;
         }
 
         .modal-overlay {
@@ -416,14 +419,23 @@
         }
 
         function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    alert(`Error attempting to enable fullscreen: ${err.message} (${err.name})`);
-                });
+            let elem = document.documentElement;
+            if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen().catch(err => {});
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen();
+                }
                 fullscreenBtn.textContent = '🗗';
             } else {
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
                 }
                 fullscreenBtn.textContent = '⛶';
             }
@@ -431,6 +443,13 @@
 
         document.addEventListener('fullscreenchange', () => {
             if (!document.fullscreenElement) {
+                fullscreenBtn.textContent = '⛶';
+            } else {
+                fullscreenBtn.textContent = '🗗';
+            }
+        });
+        document.addEventListener('webkitfullscreenchange', () => {
+            if (!document.webkitFullscreenElement) {
                 fullscreenBtn.textContent = '⛶';
             } else {
                 fullscreenBtn.textContent = '🗗';
@@ -543,7 +562,6 @@
             }
 
             buildWheel();
-            resultDiv.textContent = "Settings updated!";
             toggleSettings(false);
         }
 
@@ -554,7 +572,6 @@
             spinBtnText.style.display = 'block';
             spinBtnImg.classList.remove('show');
             spinBtnImg.style.display = 'none';
-            resultDiv.textContent = "Spinning...";
 
             const minSpins = Math.max(3, Math.floor(spinDuration / 1.5));
             const maxSpins = Math.max(5, Math.floor(spinDuration * 1.2));
